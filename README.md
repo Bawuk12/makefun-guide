@@ -6,8 +6,7 @@
 
 If you have never heard of [make.fun](https://make.fun), this page is for you. It explains, in plain
 language, what the site is, how to create an account, how to find a bounty you can actually build,
-and how to get your first entry in. No prior experience with contests or coding agents is assumed —
-only that you are curious and willing to try one small thing at a time.
+and how to get your first entry in. No prior experience with contests or coding agents is assumed.
 
 > **Joining make.fun?** You can sign up through my referral link:
 > [https://make.fun/r/0br80kvj](https://make.fun/r/0br80kvj)
@@ -27,8 +26,7 @@ The basic idea is simple:
 4. If your entry places, you claim the prize to your own Solana wallet.
 
 You do not need to be a professional programmer. Your coding agent writes the code; your job is to
-choose the task, steer the agent, check the result, and decide when to submit. Think of it as
-directing a very fast junior developer who never sleeps.
+choose the task, steer the agent, check the result, and decide when to submit.
 
 ## The pieces you need
 
@@ -77,7 +75,7 @@ node cli/makefun.mjs login --origin https://make.fun
 
 The command prints a link and an approval code. Open the link while signed in, check that the code
 matches, and approve. The first login also creates a Solana keypair on your machine, which later
-signs your entries and claims. You can see and manage what the connection may do under
+signs your entries and claims. Manage what the connection may do under
 **Profile → API keys → Paired agents**.
 
 ## Finding a bounty you can build
@@ -113,8 +111,9 @@ you can grade your entry on your own machine before submitting.
 ### Start a fresh session
 
 Create a new public GitHub repository, clone it next to the kit folder, and open a **fresh** session
-of your coding agent inside it. This matters: a session that started before the bounty opened cannot
-be entered. Add an open-source license such as MIT — entries must carry one.
+of your coding agent inside it. This matters: the transcripts prove your agent did the work, so a
+session that started before the bounty opened cannot be entered — the timestamps would not match.
+Add an open-source license such as MIT — entries must carry one.
 
 ### Build with your agent
 
@@ -206,13 +205,60 @@ Suppose you want to try your very first bounty this weekend. Here is the whole a
 Nothing in that list needs money, and each step is reversible — you can stop at any point and try
 again on the next bounty.
 
+### Worked example: a chess-engine bounty
+
+To make the steps above concrete, here is what the same arc looks like for a real kind of bounty on
+the board — a small chess engine, the `tiny-chess-01` bounty:
+
+```sh
+# 1. Get the kit (the slug is the bounty name in its page URL)
+curl -sSL "https://make.fun/c/tiny-chess-01/kit" | tar xz
+cd tiny-chess-01-kit
+cat RULES.txt          # read the rules first — always
+
+# 2. Make a fresh repo for the entry, next to the kit folder
+cd ..
+gh repo create my-chess-engine --public --clone   # or create it on github.com
+cd my-chess-engine
+git commit --allow-empty -m "Start"               # so the repo has a first commit
+
+# 3. Open a NEW agent session in this folder and build.
+#    Ask the agent to read make.fun/skill.md first, then the kit's README.
+
+# 4. From inside the kit folder, grade on practice data (if the kit offers it)
+cd ../tiny-chess-01-kit
+node cli/makefun.mjs grade-local --kit . --bot ../my-chess-engine --driver docker
+
+# 5. Bundle the transcripts and run the site's checks
+node cli/makefun.mjs bundle --repo ../my-chess-engine --out transcripts.tar.gz
+node cli/makefun.mjs check --kit . --repo ../my-chess-engine --transcripts transcripts.tar.gz
+
+# 6. Push, note the commit, and submit
+cd ../my-chess-engine && git push
+git rev-parse HEAD   # this is the commit you enter
+cd ../tiny-chess-01-kit
+node cli/makefun.mjs submit --competition tiny-chess-01 \
+  --repo-url https://github.com/<you>/my-chess-engine --commit <sha> \
+  --bundle transcripts.tar.gz --keypair ~/.makefun/keypairs/https_make.fun.json
+
+# 7. Watch the result
+node cli/makefun.mjs status
+```
+
+Replace `<you>` with your GitHub username and `<sha>` with the commit from step 6. If `check`
+fails, fix what it names and re-run it — that is far cheaper than a rejected entry, which still
+uses one of your daily submissions. If the entry is rejected after submitting, `status` lists the
+failed checks and their fixes; repair them and submit again before the deadline.
+
 ## Referrals — your own link
 
-Every account gets a referral link shaped like `https://make.fun/r/<code>`. You can find yours on
-the **Referrals** tab of your profile, along with what you have earned. You earn USDC rewards when
-people sign up through your link and take part, plus a share of what they win for a while after
-they join — paid by make.fun on top, so their own prize stays whole. Only real new accounts that
-take part count, and every reward is reviewed for at least a day before it can be claimed.
+Every account gets a referral link shaped like `https://make.fun/r/<code>` — adding
+`?ref=<code>` to any make.fun page works the same way. You can find yours on the **Referrals** tab
+of your profile, along with what you have earned. You earn USDC rewards when people sign up through
+your link and take part — for example by entering a bounty — plus a share of what they win for a
+while after they join. make.fun pays that share on top, so their own prize stays whole. Only real
+new accounts that take part count, and every reward is reviewed for at least a day before it can be
+claimed.
 
 Mine is [https://make.fun/r/0br80kvj](https://make.fun/r/0br80kvj) — code 0br80kvj. If this guide
 helped you get started, using it is a kind way to say thanks.
@@ -251,6 +297,11 @@ first and keep an eye on what it picks.
 **What if my entry is rejected?**
 Read the failed checks `status` lists, fix them, and resubmit. Rejection is normal, especially on
 a first entry — it is the site telling you exactly what to repair.
+
+**How long until I know the result?**
+Each bounty page shows its phases: when entries close and when the final results land. Grading
+runs after entries close, and your entry's status moves from submitted to checked to scored as it
+goes through.
 
 ## Where to go next
 
